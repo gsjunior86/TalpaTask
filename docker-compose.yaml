@@ -1,0 +1,26 @@
+version: "2"
+
+services:
+
+ talpa:
+    image: gsjunior/talpa:latest
+    container_name: talpa
+    environment:
+      - db_host=jdbc:postgresql://postgres/talpa
+      - base_py=/data/talpa/py 
+      - input_file=/data/talpa/csv/data_case_study.csv
+    volumes:
+      - ./python:/data/talpa/py
+      - ./data:/data/talpa/csv
+   
+       
+ postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: talpa
+      POSTGRES_PASSWORD: 123456
+    ports:
+       - "5432:5432"
+    
+    

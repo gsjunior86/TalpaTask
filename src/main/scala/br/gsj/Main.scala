@@ -1,0 +1,170 @@
+package br.gsj
+
+import java.io.File
+
+import scala.sys.process._
+
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+import scala.collection.mutable.ListBuffer
+import org.apache.spark.sql.types.LongType
+
+object Main {
+
+  val DB_ENV = "db_host"
+  val PY_ENV = "base_py"
+  val CSV_ENV = "input_file"
+  
+  val driver = "org.postgresql.Driver"
+
+  
+  var py_pred = "python "+ System.getenv(PY_ENV) +"/Prediction.py"
+  var py_res = System.getenv(PY_ENV) +"/result.csv"
+  
+
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder().appName("TalpaTest").master("local[*]").getOrCreate()
+    import spark.sqlContext.implicits._
+
+
+    val db_host = System.getenv(DB_ENV)
+
+    val csv_file = System.getenv(CSV_ENV)
+
+    val avgUDF = udf((v1: Float, v2: Float) => { (v1 + v2) / 2 })
+
+    val csv = spark.read
+      .option("header", true)
+      .option("inferSchema", "true")
+      .csv(csv_file)
+      .na
+      .fill(0, Array(
+        "pvalve_drill_forward",
+        "hydraulic_pump",
+        "bolt",
+        "boom_lift",
+        "boom_lower",
+        "boom_forward",
+        "boom_backward",
+        "drill_boom_turn_left",
+        "drill_boom_turn_right",
+        "drill_boom_turn_forward",
+        "drill_boom_turn_backward",
+        "beam_right",
+        "beam_left",
+        "anchor"))
+      //.withColumn("timestamp", to_timestamp(col("timestamp")) )
+      .withColumn("boom_long", avgUDF(col("boom_lift"), col("boom_lower")))
+      .withColumn("boom_lati", avgUDF(col("boom_forward"), col("boom_backward")))
+      .withColumn("drill_boom_long", avgUDF(col("drill_boom_turn_left"), col("drill_boom_turn_right")))
+      .withColumn("drill_boom_lati", avgUDF(col("drill_boom_turn_forward"), col("drill_boom_turn_backward")))
+      .withColumn("beam", avgUDF(col("beam_left"), col("beam_right")))
+
+    val py_df = csv.select("timestamp",
+      "engine_speed", "hydraulic_drive_off", "drill_boom_in_anchor_position", "pvalve_drill_forward", "bolt", "boom_long", "boom_lati", "drill_boom_long", "drill_boom_lati", "beam")
+
+    py_df.coalesce(1).write
+      .option("header", true)
+      .mode(SaveMode.Overwrite)
+      .csv("result")
+
+    
+
+    var avg_df = csv.withColumn("timestamp", to_timestamp(col("timestamp"))).groupBy(window($"timestamp", "5 minutes"))
+      .agg(round(avg(col("engine_speed")), 2).as("avg_speed")).withColumn("start", col("window.start"))
+      .withColumn("end", col("window.end")).drop("window")
+      .select("start", "end", "avg_speed")
+
+    avg_df.show
+
+    avg_df.printSchema()
+
+    avg_df.write.format("jdbc").mode(SaveMode.Overwrite)
+      .option("url", db_host)
+      .option("dbtable", "average_speed")
+      .option("user", "talpa")
+      .option("password", "123456")
+      .option("driver", driver)
+      .save
+
+    callPython(getListOfFiles("result"))
+
+    val res_file = new File(py_res)
+    
+    print(res_file.getAbsoluteFile)
+
+    if (res_file.exists()) {
+      
+      
+      var pred_df = spark.read
+        .option("header", true)
+        .option("inferSchema", "true")
+        .csv(py_res)
+        .withColumn("timestamp", to_timestamp(col("timestamp")))
+        .withColumnRenamed("prediction", "type")
+        .select("timestamp", "type")
+        .orderBy("timestamp")
+        
+      
+      val ndf = pred_df.rdd.map(f => (f(0).toString ,f(1).toString,"")).collect
+      
+      var typ = ndf(0)._2
+      var cont = 1
+      
+      var na = new ListBuffer[(String,String,String)]()
+      
+      for( el <- ndf){
+         if(!el._2.equals(typ)){
+           cont +=1
+           typ = el._2
+         }
+          
+         na += ((el._1,el._2,cont.toString))
+          
+      }
+      
+      pred_df = spark.sparkContext.parallelize(na).toDF("timestamp","type","id")
+      .withColumn("timestamp", to_timestamp(col("timestamp")))
+      .withColumn("id", col("id").cast(LongType))
+      
+      pred_df.write.format("jdbc").mode(SaveMode.Overwrite)
+      .option("url", db_host)
+      .option("dbtable", "activity")
+      .option("user", "talpa")
+      .option("password", "123456")
+      .option("driver", driver)
+      .save
+
+      
+      
+     
+      
+
+    } else {
+      println("An error occurend when running the python script!")
+    }
+    //res_file.delete()
+
+  }
+
+  def callPython(file : String): Unit = {
+    val cmd = py_pred + " " + file
+    println("CMD >>>> " + cmd)
+    val result = cmd ! ProcessLogger(stdout append _, stderr append _)
+    println(result)
+    println("stdout: " + stdout)
+    println("stderr: " + stderr)
+  }
+
+  def getListOfFiles(dir: String): String = {
+    val d = new File(dir)
+    if (d.exists && d.isDirectory) {
+
+      d.listFiles.filter(_.getName.endsWith(".csv")).toList(0).getAbsolutePath
+
+    } else {
+      ""
+    }
+  }
+}
