@@ -9,6 +9,7 @@ services:
       - db_host=jdbc:postgresql://postgres/talpa
       - base_py=/data/talpa/py 
       - input_file=/data/talpa/csv/data_case_study.csv
+      - output_folder=/data/talpa/csv
     volumes:
       - ./python:/data/talpa/py
       - ./data:/data/talpa/csv
