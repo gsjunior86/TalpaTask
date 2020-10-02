@@ -47,10 +47,10 @@ RUN export SPARK_HOME="/spark/"
 
 COPY ./python/model.pkl /data/talpa/py/model.pkl
 COPY ./python/Prediction.py /data/talpa/py/Prediction.py      
-COPY ./target/DataPreparation-1.0.jar /data/talpa/DataPreparation-1.0.jar
+COPY ./target/TalpaTask-1.0.jar /data/talpa/TalpaTask-1.0.jar
 COPY ./data/data_case_study.csv /data/talpa/data_case_study.csv
 COPY ./target/lib /data/talpa/lib
 
 WORKDIR /data/talpa
 
-CMD /spark/bin/./spark-submit --class br.gsj.Main --jars $(echo lib/*.jar | tr ' ' ',') --driver-memory 5G --master local[*] DataPreparation-1.0.jar data_case_study.csv
+CMD /spark/bin/./spark-submit --class br.gsj.Main --jars $(echo lib/*.jar | tr ' ' ',') --driver-memory 5G --master local[*] TalpaTask-1.0.jar
