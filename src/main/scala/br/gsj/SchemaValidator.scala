@@ -20,7 +20,7 @@ object SchemaValidator {
     var missingColumns = new StringBuilder("")
     for(s <- expectedCols){
       if (!(cols contains s))
-        missingColumns.append(s)
+        missingColumns.append(s + ",")
       
     }
     
