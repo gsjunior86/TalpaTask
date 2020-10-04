@@ -42,6 +42,17 @@ object Main {
 
     //user defined function to compute average between two columns
     val avgUDF = udf((v1: Float, v2: Float) => { (v1 + v2) / 2 })
+    
+    val rawCsv = spark.read
+      .option("header", true)
+      .option("inferSchema", "true")
+      .csv(csv_file)
+      
+      val e = SchemaValidator.isSchemaValid(rawCsv)
+      
+      if(!e.isEmpty())
+        throw new IllegalArgumentException("Input file is invalid, missing columns: " + e)
+      
 
     //compute average between
     val csv = spark.read
@@ -99,6 +110,10 @@ object Main {
       .csv(csv_output + "/average_speed")
 
     //tries to save on the postgres DB. If something happpens an exception will be thrown
+    
+    var conf_avgspd = false
+    var conf_activity = false
+      
     try {
       avg_df.write.format("jdbc").mode(SaveMode.Overwrite)
         .option("url", db_host)
@@ -107,6 +122,9 @@ object Main {
         .option("password", "123456")
         .option("driver", driver)
         .save
+        
+       conf_avgspd = true
+       
 
     } catch {
       case e: Throwable => e.printStackTrace
@@ -165,6 +183,8 @@ object Main {
           .option("password", "123456")
           .option("driver", driver)
           .save
+          
+          conf_activity = true
 
       } catch {
         case e: Throwable => e.printStackTrace
@@ -182,6 +202,13 @@ object Main {
     }
     //delete the prediction file, since it is useless at this point
     res_file.delete
+    
+   
+    
+    if(conf_avgspd && conf_activity)
+      println("All data were successfully saved on Database!")
+      
+    
 
   }
 

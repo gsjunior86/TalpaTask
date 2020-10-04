@@ -10,106 +10,106 @@
 		<scala.version>2.12</scala.version>
 		<scala.binary>2.12.4</scala.binary>
 		<spark.version>3.0.1</spark.version>
-	</properties>
+		</properties>
 
-	<dependencies>
+		<dependencies>
 
-		<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_${scala.version}</artifactId>
-			<version>${spark.version}</version>
-		</dependency>
+			<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
+			<dependency>
+				<groupId>org.apache.spark</groupId>
+				<artifactId>spark-core_${scala.version}</artifactId>
+				<version>${spark.version}</version>
+			</dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.2.16</version>
-		</dependency>
-
-
-
-		<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql_${scala.version}</artifactId>
-			<version>${spark.version}</version>
-		</dependency>
-
-
-		<!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-library</artifactId>
-			<version>${scala.binary}</version>
-		</dependency>
-
-
-	</dependencies>
+			<!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>42.2.16</version>
+			</dependency>
 
 
 
-	<build>
-		<sourceDirectory>src/main/scala</sourceDirectory>
-		<testSourceDirectory>src/test/scala</testSourceDirectory>
-		<plugins>
+			<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+			<dependency>
+				<groupId>org.apache.spark</groupId>
+				<artifactId>spark-sql_${scala.version}</artifactId>
+				<version>${spark.version}</version>
+			</dependency>
 
-			<plugin>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-							<excludeScope>provided</excludeScope>
-							<excludeGroupIds>
-								org.apache.spark,org.eclipse.jetty,org.scala-lang
-							</excludeGroupIds>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-						<configuration>
-							<args>
-								<!--<arg>-make:transitive</arg> -->
-								<arg>-dependencyfile</arg>
-								<arg>${project.build.directory}/.scala_dependencies</arg>
-							</args>
-						</configuration>
-					</execution>
-				</executions>
-				<configuration>
-					<scalaVersion>${scala.binary}</scalaVersion>
-					<recompileMode>incremental</recompileMode>
-				</configuration>
-			</plugin>
+			<!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
+			<dependency>
+				<groupId>org.scala-lang</groupId>
+				<artifactId>scala-library</artifactId>
+				<version>${scala.binary}</version>
+			</dependency>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+
+		</dependencies>
+
+
+
+		<build>
+			<sourceDirectory>src/main/scala</sourceDirectory>
+			<testSourceDirectory>src/test/scala</testSourceDirectory>
+			<plugins>
+
+				<plugin>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<executions>
+						<execution>
+							<phase>install</phase>
+							<goals>
+								<goal>copy-dependencies</goal>
+							</goals>
+							<configuration>
+								<outputDirectory>${project.build.directory}/lib</outputDirectory>
+								<excludeScope>provided</excludeScope>
+								<excludeGroupIds>
+									org.apache.spark,org.eclipse.jetty,org.scala-lang
+								</excludeGroupIds>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+
+				<plugin>
+					<groupId>net.alchim31.maven</groupId>
+					<artifactId>scala-maven-plugin</artifactId>
+					<version>3.2.1</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>compile</goal>
+								<goal>testCompile</goal>
+							</goals>
+							<configuration>
+								<args>
+									<!--<arg>-make:transitive</arg> -->
+									<arg>-dependencyfile</arg>
+									<arg>${project.build.directory}/.scala_dependencies</arg>
+								</args>
+							</configuration>
+						</execution>
+					</executions>
+					<configuration>
+						<scalaVersion>${scala.binary}</scalaVersion>
+						<recompileMode>incremental</recompileMode>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.7.0</version>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
 
 
 </project>
