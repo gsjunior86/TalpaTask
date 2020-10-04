@@ -25,3 +25,8 @@ then, you can build with:
 ```
 make build dockerize
 ```
+# Configuring on the IDE
+
+To run in an IDE (e.g Eclipse, IntelliJ), make sure that you are configuring all the environment variables described in the docker-compose file in your execution settings.
+
+
